@@ -1,0 +1,62 @@
+{
+  "format": "flight-exchange",
+  "formatVersion": "1.0",
+  "flightId": "7d9e1f20-3a4b-4c5d-9e6f-7a8b9c0d1e2f",
+  "createdAt": "2026-08-14T11:40:00.000Z",
+  "producer": {
+    "name": "FlightRecorder",
+    "version": "0.3.0",
+    "platform": "android"
+  },
+  "files": [
+    {
+      "path": "flight.json",
+      "role": "flight",
+      "mediaType": "application/json",
+      "size": 1878,
+      "sha256": "c6010cf7fb7808085925f3231ab158c71c47e7630b7b57af45d882d1cbe81cd5"
+    },
+    {
+      "path": "track.csv",
+      "role": "track",
+      "mediaType": "text/csv",
+      "size": 146639,
+      "sha256": "941962b3d6a587f455643646ab2f074cb5d97c4e834e8b8b23ab8a22ffe609c7"
+    },
+    {
+      "path": "sensors/pressure.csv",
+      "role": "sensor",
+      "mediaType": "text/csv",
+      "size": 144481,
+      "sha256": "3bc59a4dfd41c449f8feb718f86b69da7813ca2492d46c86d40815a9aaf48c94"
+    },
+    {
+      "path": "sensors/accelerometer.csv",
+      "role": "sensor",
+      "mediaType": "text/csv",
+      "size": 644856,
+      "sha256": "8ca0101bdd2d0e49830c91120948383a16080513bca8a4ed07e366500619a079"
+    },
+    {
+      "path": "sensors/gyroscope.csv",
+      "role": "sensor",
+      "mediaType": "text/csv",
+      "size": 641233,
+      "sha256": "d445d72a836daabd0f0bfd70081708bdff7f6b7f1ec7375eb84e2dd9f463048e"
+    },
+    {
+      "path": "track.gpx",
+      "role": "track-gpx",
+      "mediaType": "application/gpx+xml",
+      "size": 179354,
+      "sha256": "e870ba9465c10fed3c57fada42511cd246f457b3800bdd0832308311017fb5e9"
+    },
+    {
+      "path": "media/0001.png",
+      "role": "media",
+      "mediaType": "image/png",
+      "size": 70,
+      "sha256": "6b7fa434f92a8b80aab02d9bf1a12e49ffcae424e4013a1c4f68b67e3d2bbcd0"
+    }
+  ]
+}

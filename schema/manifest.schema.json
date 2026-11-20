@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flightbook.app/schema/fxf/1/manifest.schema.json",
+  "title": "FXF manifest.json",
+  "description": "Inventaire d'une archive Flight Exchange Format. Voir SPECIFICATION.md § 5. Les propriétés inconnues sont tolérées (compatibilité ascendante) ; le mode strict les refuse.",
+  "type": "object",
+  "required": ["format", "formatVersion", "flightId", "createdAt", "producer", "files"],
+  "properties": {
+    "format": { "const": "flight-exchange" },
+    "formatVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+$" },
+    "flightId": { "$ref": "#/$defs/uuid" },
+    "createdAt": { "$ref": "#/$defs/instant" },
+    "producer": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "version": { "type": "string", "minLength": 1, "maxLength": 50 },
+        "platform": { "type": "string", "minLength": 1, "maxLength": 50 }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "role"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "^(?!/)(?!.*\\\\)(?!.*(^|/)\\.\\.(/|$))(?![A-Za-z]:).+$"
+          },
+          "role": {
+            "type": "string",
+            "description": "flight, track, sensor, track-igc, track-gpx, media, other. Un rôle inconnu est ignoré par le consommateur.",
+            "minLength": 1
+          },
+          "mediaType": { "type": "string", "minLength": 1 },
+          "size": { "type": "integer", "minimum": 0 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        }
+      }
+    },
+    "extensions": { "$ref": "#/$defs/extensions" }
+  },
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "instant": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "extensions": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z0-9-]+(\\.[a-z0-9-]+)+$" },
+      "additionalProperties": true
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "id": "7d9e1f20-3a4b-4c5d-9e6f-7a8b9c0d1e2f",
+  "revision": 2,
+  "activity": "paragliding",
+  "title": "Forclaz – Doussard, thermiques du matin",
+  "notes": "Vol synthétique généré pour la spécification FXF.",
+  "takeoff": {
+    "time": "2026-08-14T11:02:00.000Z",
+    "latitude": 45.81302,
+    "longitude": 6.24651,
+    "altitude": 1255,
+    "siteName": "Col de la Forclaz"
+  },
+  "landing": {
+    "time": "2026-08-14T11:27:00.000Z",
+    "latitude": 45.78363,
+    "longitude": 6.22098,
+    "altitude": 452,
+    "siteName": "Doussard"
+  },
+  "timezone": "Europe/Paris",
+  "pilot": {
+    "name": "Pilote Exemple"
+  },
+  "equipment": {
+    "glider": {
+      "brand": "Ozone",
+      "model": "Rush 6",
+      "size": "MS",
+      "certification": "EN-B"
+    },
+    "harness": {
+      "brand": "Woody Valley",
+      "model": "X-Rated 7"
+    }
+  },
+  "statistics": {
+    "durationSeconds": 1500,
+    "trackLengthMeters": 14954,
+    "maxAltitudeMeters": 1806.6,
+    "minAltitudeMeters": 452,
+    "altitudeGainMeters": 1218,
+    "maxClimbRate": 3.6,
+    "maxSinkRate": -8.2,
+    "maxGroundSpeed": 12
+  },
+  "recording": {
+    "device": {
+      "manufacturer": "Google",
+      "model": "Pixel 8",
+      "os": "Android",
+      "osVersion": "15"
+    },
+    "locationProvider": "fused",
+    "nominalIntervalMs": 1000,
+    "sensors": {
+      "barometer": true,
+      "accelerometer": true,
+      "gyroscope": true
+    },
+    "geoidModel": "EGM2008",
+    "detection": "automatic",
+    "resumeCount": 0,
+    "gaps": [
+      {
+        "start": "2026-08-14T11:13:39.000Z",
+        "end": "2026-08-14T11:13:46.000Z"
+      }
+    ]
+  },
+  "media": [
+    {
+      "path": "media/0001.png",
+      "caption": "Vue sur le lac",
+      "takenAt": "2026-08-14T11:12:00.000Z"
+    }
+  ],
+  "extensions": {
+    "com.flightrecorder": {
+      "sessionId": 42,
+      "engineVersion": "2.1"
+    }
+  }
+}

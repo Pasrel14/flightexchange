@@ -1,0 +1,27 @@
+{
+  "format": "flight-exchange",
+  "formatVersion": "1.0",
+  "flightId": "0b6a2f4e-1c3d-4e5f-8a9b-0c1d2e3f4a5b",
+  "createdAt": "2026-08-14T11:40:00.000Z",
+  "producer": {
+    "name": "FlightRecorder",
+    "version": "0.3.0",
+    "platform": "android"
+  },
+  "files": [
+    {
+      "path": "flight.json",
+      "role": "flight",
+      "mediaType": "application/json",
+      "size": 139,
+      "sha256": "8b56334d943b843199652fe2c8cd78c0370808e3732c0d0e1f2d5d0cc872d88f"
+    },
+    {
+      "path": "track.csv",
+      "role": "track",
+      "mediaType": "text/csv",
+      "size": 71739,
+      "sha256": "ae407288bd46e254be1d0ae6c116306a62b8172bad5901504f9f3198e6211135"
+    }
+  ]
+}

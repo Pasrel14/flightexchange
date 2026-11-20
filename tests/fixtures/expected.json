@@ -1,0 +1,201 @@
+{
+  "valid/minimal.fxf": {
+    "description": "Le strict minimum : id, activité, heure de décollage, trace t/lat/lon/alt_ellipsoid.",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "FXF_W_ELLIPSOID_ONLY"
+    ]
+  },
+  "valid/complete.fxf": {
+    "description": "Toutes les données : capteurs, GPX, photo, extensions, trou GNSS.",
+    "ok": true,
+    "errors": [],
+    "warnings": []
+  },
+  "valid/no-landing.fxf": {
+    "description": "Vol interrompu (batterie vide) : pas de landing.",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "FXF_W_ELLIPSOID_ONLY"
+    ]
+  },
+  "valid/position-only.fxf": {
+    "description": "Trace sans aucune altitude (t, lat, lon seulement).",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "FXF_W_NO_GNSS_ALTITUDE"
+    ]
+  },
+  "valid/newer-minor.fxf": {
+    "description": "Version 1.7 : champs, colonne, rôle et fichier inconnus ignorés avec avertissement. Refusé en mode strict.",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "FXF_W_NEWER_MINOR",
+      "FXF_W_UNKNOWN_FILE",
+      "FXF_W_UNLISTED_FILE",
+      "FXF_W_UNKNOWN_COLUMN"
+    ],
+    "strictErrors": [
+      "FXF_E_STRICT"
+    ]
+  },
+  "valid/no-checksum-crlf.fxf": {
+    "description": "Manifeste sans size ni sha256, CSV en CRLF : accepté (avertissement), refusé en mode strict.",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "FXF_W_NO_CHECKSUM"
+    ],
+    "strictErrors": [
+      "FXF_E_STRICT"
+    ]
+  },
+  "valid/bad-sensor.fxf": {
+    "description": "Baromètre corrompu : capteur écarté, vol importé.",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "FXF_W_SENSOR_DISCARDED"
+    ]
+  },
+  "valid/simulated.fxf": {
+    "description": "Trace issue du simulateur : importable, mais signalée.",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "FXF_W_SIMULATED"
+    ]
+  },
+  "invalid/not-zip.fxf": {
+    "description": "Fichier texte renommé en .fxf.",
+    "ok": false,
+    "errors": [
+      "FXF_E_NOT_ZIP"
+    ],
+    "warnings": []
+  },
+  "invalid/missing-manifest.fxf": {
+    "description": "Archive sans manifest.json.",
+    "ok": false,
+    "errors": [
+      "FXF_E_MISSING_MANIFEST"
+    ],
+    "warnings": []
+  },
+  "invalid/invalid-json.fxf": {
+    "description": "flight.json tronqué.",
+    "ok": false,
+    "errors": [
+      "FXF_E_INVALID_JSON"
+    ],
+    "warnings": []
+  },
+  "invalid/unsupported-major.fxf": {
+    "description": "Version 2.0 : refusée avec un message explicite.",
+    "ok": false,
+    "errors": [
+      "FXF_E_UNSUPPORTED_VERSION"
+    ],
+    "warnings": []
+  },
+  "invalid/missing-activity.fxf": {
+    "description": "flight.json sans le champ obligatoire activity.",
+    "ok": false,
+    "errors": [
+      "FXF_E_SCHEMA"
+    ],
+    "warnings": []
+  },
+  "invalid/local-time.fxf": {
+    "description": "Heure de décollage sans Z (heure locale) : refusée.",
+    "ok": false,
+    "errors": [
+      "FXF_E_SCHEMA"
+    ],
+    "warnings": []
+  },
+  "invalid/missing-track.fxf": {
+    "description": "track.csv absent de l’archive et du manifeste.",
+    "ok": false,
+    "errors": [
+      "FXF_E_MISSING_FILE"
+    ],
+    "warnings": []
+  },
+  "invalid/checksum.fxf": {
+    "description": "track.csv modifié après la création du manifeste.",
+    "ok": false,
+    "errors": [
+      "FXF_E_CHECKSUM"
+    ],
+    "warnings": []
+  },
+  "invalid/id-mismatch.fxf": {
+    "description": "manifest.flightId différent de flight.id.",
+    "ok": false,
+    "errors": [
+      "FXF_E_ID_MISMATCH"
+    ],
+    "warnings": []
+  },
+  "invalid/track-unsorted.fxf": {
+    "description": "Deux lignes de la trace inversées.",
+    "ok": false,
+    "errors": [
+      "FXF_E_CSV_ORDER"
+    ],
+    "warnings": []
+  },
+  "invalid/track-missing-column.fxf": {
+    "description": "Trace sans colonne lon.",
+    "ok": false,
+    "errors": [
+      "FXF_E_CSV_HEADER"
+    ],
+    "warnings": []
+  },
+  "invalid/track-bad-value.fxf": {
+    "description": "Latitude hors bornes et altitude « NaN ».",
+    "ok": false,
+    "errors": [
+      "FXF_E_CSV_VALUE"
+    ],
+    "warnings": []
+  },
+  "invalid/track-too-short.fxf": {
+    "description": "Un seul point.",
+    "ok": false,
+    "errors": [
+      "FXF_E_TRACK_TOO_SHORT"
+    ],
+    "warnings": []
+  },
+  "invalid/takeoff-outside-track.fxf": {
+    "description": "Heure de décollage un jour après la trace.",
+    "ok": false,
+    "errors": [
+      "FXF_E_INCONSISTENT"
+    ],
+    "warnings": []
+  },
+  "invalid/msl-without-geoid.fxf": {
+    "description": "Colonne alt_msl sans recording.geoidModel.",
+    "ok": false,
+    "errors": [
+      "FXF_E_INCONSISTENT"
+    ],
+    "warnings": []
+  },
+  "invalid/unsafe-path.fxf": {
+    "description": "Entrée ZIP qui tente de sortir du dossier d’extraction.",
+    "ok": false,
+    "errors": [
+      "FXF_E_UNSAFE_PATH"
+    ],
+    "warnings": []
+  }
+}

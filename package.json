@@ -1,0 +1,40 @@
+{
+  "name": "flight-exchange",
+  "version": "1.0.0",
+  "description": "Flight Exchange Format (FXF) : spécification, schémas, exemples et bibliothèque de référence (lecture, écriture, validation).",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema/manifest.schema.json": "./schema/manifest.schema.json",
+    "./schema/flight.schema.json": "./schema/flight.schema.json"
+  },
+  "bin": {
+    "fxf-validate": "./bin/fxf-validate.ts"
+  },
+  "files": [
+    "src",
+    "schema",
+    "bin",
+    "SPECIFICATION.md"
+  ],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "examples": "node scripts/make-examples.ts",
+    "validate": "node bin/fxf-validate.ts"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "fflate": "^0.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9"
+  }
+}

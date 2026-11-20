@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flightbook.app/schema/fxf/1/flight.schema.json",
+  "title": "FXF flight.json",
+  "description": "Description normalisée d'un vol. Voir SPECIFICATION.md § 6. Les propriétés inconnues sont tolérées (compatibilité ascendante) ; le mode strict les refuse.",
+  "type": "object",
+  "required": ["id", "activity", "takeoff"],
+  "properties": {
+    "id": { "$ref": "#/$defs/uuid" },
+    "revision": { "type": "integer", "minimum": 1, "default": 1 },
+    "activity": {
+      "type": "string",
+      "description": "paragliding, hang-gliding, speed-flying, sailplane, other. Liste extensible : une valeur inconnue est traitée comme other.",
+      "minLength": 1,
+      "maxLength": 50
+    },
+    "title": { "type": "string", "maxLength": 200 },
+    "notes": { "type": "string", "maxLength": 20000 },
+    "takeoff": { "$ref": "#/$defs/place", "required": ["time"] },
+    "landing": { "$ref": "#/$defs/place", "required": ["time"] },
+    "timezone": { "type": "string", "pattern": "^[A-Za-z_]+(/[A-Za-z0-9_+-]+)*$|^UTC$" },
+    "pilot": {
+      "type": "object",
+      "properties": { "name": { "type": "string", "maxLength": 200 } }
+    },
+    "equipment": {
+      "type": "object",
+      "properties": {
+        "glider": { "$ref": "#/$defs/gear" },
+        "harness": { "$ref": "#/$defs/gear" },
+        "reserve": { "$ref": "#/$defs/gear" },
+        "instrument": { "$ref": "#/$defs/gear" }
+      }
+    },
+    "statistics": {
+      "type": "object",
+      "properties": {
+        "durationSeconds": { "type": "number", "minimum": 0 },
+        "trackLengthMeters": { "type": "number", "minimum": 0 },
+        "straightDistanceMeters": { "type": "number", "minimum": 0 },
+        "maxDistanceFromTakeoffMeters": { "type": "number", "minimum": 0 },
+        "maxAltitudeMeters": { "type": "number" },
+        "minAltitudeMeters": { "type": "number" },
+        "altitudeGainMeters": { "type": "number", "minimum": 0 },
+        "maxClimbRate": { "type": "number", "minimum": 0 },
+        "maxSinkRate": { "type": "number", "maximum": 0 },
+        "maxGroundSpeed": { "type": "number", "minimum": 0 }
+      }
+    },
+    "recording": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "type": "object",
+          "properties": {
+            "manufacturer": { "type": "string", "maxLength": 100 },
+            "model": { "type": "string", "maxLength": 100 },
+            "os": { "type": "string", "maxLength": 50 },
+            "osVersion": { "type": "string", "maxLength": 50 }
+          }
+        },
+        "locationProvider": { "enum": ["fused", "platform", "external", "simulated", "mixed"] },
+        "nominalIntervalMs": { "type": "integer", "minimum": 1 },
+        "sensors": {
+          "type": "object",
+          "properties": {
+            "barometer": { "type": "boolean" },
+            "accelerometer": { "type": "boolean" },
+            "gyroscope": { "type": "boolean" }
+          }
+        },
+        "geoidModel": { "type": "string", "minLength": 1, "maxLength": 50 },
+        "detection": { "enum": ["automatic", "manual"] },
+        "resumeCount": { "type": "integer", "minimum": 0 },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["start", "end"],
+            "properties": {
+              "start": { "$ref": "#/$defs/instant" },
+              "end": { "$ref": "#/$defs/instant" }
+            }
+          }
+        }
+      }
+    },
+    "media": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string", "pattern": "^media/[^/].*$" },
+          "caption": { "type": "string", "maxLength": 1000 },
+          "takenAt": { "$ref": "#/$defs/instant" }
+        }
+      }
+    },
+    "extensions": { "$ref": "#/$defs/extensions" }
+  },
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "instant": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "place": {
+      "type": "object",
+      "properties": {
+        "time": { "$ref": "#/$defs/instant" },
+        "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
+        "longitude": { "type": "number", "minimum": -180, "maximum": 180 },
+        "altitude": { "type": "number", "description": "Mètres au-dessus du niveau moyen de la mer." },
+        "siteName": { "type": "string", "maxLength": 200 }
+      },
+      "dependentRequired": { "latitude": ["longitude"], "longitude": ["latitude"] }
+    },
+    "gear": {
+      "type": "object",
+      "properties": {
+        "brand": { "type": "string", "maxLength": 100 },
+        "model": { "type": "string", "maxLength": 100 },
+        "size": { "type": "string", "maxLength": 20 },
+        "certification": { "type": "string", "maxLength": 50 },
+        "serial": { "type": "string", "maxLength": 100 }
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z0-9-]+(\\.[a-z0-9-]+)+$" },
+      "additionalProperties": true
+    }
+  }
+}
