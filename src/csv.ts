@@ -1,9 +1,9 @@
 /** Lecture et écriture des fichiers CSV FXF (SPECIFICATION.md § 4.2, § 7, § 8). */
 
 import type { Issues } from './issues.ts';
-import type { PressureSample, TrackPoint, VectorSample } from './types.ts';
+import type { FlightEvent, PressureSample, TrackPoint, VectorSample } from './types.ts';
 
-type Kind = 'int' | 'num';
+type Kind = 'int' | 'num' | 'text';
 
 export interface ColumnSpec<T> {
   /** Nom de la colonne dans le fichier. */
@@ -14,6 +14,13 @@ export interface ColumnSpec<T> {
   required?: boolean;
   min?: number;
   max?: number;
+  /** Pour `text` : expression régulière que la valeur doit respecter. */
+  pattern?: RegExp;
+}
+
+export interface CsvOptions {
+  /** `strict` (défaut) : t strictement croissant ; `nondecreasing` : t égaux permis (events.csv). */
+  order?: 'strict' | 'nondecreasing';
 }
 
 export const TRACK_COLUMNS: ColumnSpec<TrackPoint>[] = [
@@ -45,6 +52,15 @@ export const VECTOR_COLUMNS: ColumnSpec<VectorSample>[] = [
   { name: 'z', key: 'z', kind: 'num', required: true },
 ];
 
+/** Type d'événement : identifiant, éventuellement préfixé par un nom de domaine inversé (§ 8.1). */
+export const EVENT_TYPE_RE = /^(?:[a-z0-9-]+(?:\.[a-z0-9-]+)+\.)?[a-z][a-z0-9_]*$/;
+
+export const EVENT_COLUMNS: ColumnSpec<FlightEvent>[] = [
+  { name: 't', key: 't', kind: 'int', required: true, min: 0 },
+  { name: 'type', key: 'type', kind: 'text', required: true, pattern: EVENT_TYPE_RE },
+  { name: 'value', key: 'value', kind: 'num' },
+];
+
 const INT_RE = /^-?\d+$/;
 const NUM_RE = /^-?\d+(\.\d+)?$/;
 
@@ -55,7 +71,8 @@ const MAX_VALUE_ERRORS = 20;
  * Analyse un CSV FXF. Retourne `undefined` si une erreur bloquante empêche d'exploiter le fichier
  * (les anomalies sont ajoutées à `issues`).
  */
-export function parseCsv<T>(text: string, columns: ColumnSpec<T>[], file: string, issues: Issues): T[] | undefined {
+export function parseCsv<T>(text: string, columns: ColumnSpec<T>[], file: string, issues: Issues, options: CsvOptions = {}): T[] | undefined {
+  const allowEqual = options.order === 'nondecreasing';
   if (text.charCodeAt(0) === 0xfeff) text = text.slice(1); // BOM toléré en lecture
   const lines = text.split(/\r?\n/);
   while (lines.length && lines[lines.length - 1] === '') lines.pop();
@@ -102,7 +119,7 @@ export function parseCsv<T>(text: string, columns: ColumnSpec<T>[], file: string
       valueError(`${cells.length} cellules au lieu de ${header.length}.`, lineNo);
       continue;
     }
-    const row: Record<string, number> = {};
+    const row: Record<string, number | string> = {};
     let ok = true;
     for (let j = 0; j < cells.length; j++) {
       const spec = mapping[j];
@@ -113,6 +130,15 @@ export function parseCsv<T>(text: string, columns: ColumnSpec<T>[], file: string
           valueError(`Valeur obligatoire « ${spec.name} » vide.`, lineNo);
           ok = false;
         }
+        continue;
+      }
+      if (spec.kind === 'text') {
+        if (spec.pattern && !spec.pattern.test(cell)) {
+          valueError(`« ${spec.name} » : valeur mal formée « ${cell} ».`, lineNo);
+          ok = false;
+          continue;
+        }
+        row[spec.key] = cell;
         continue;
       }
       if (!(spec.kind === 'int' ? INT_RE : NUM_RE).test(cell)) {
@@ -129,10 +155,10 @@ export function parseCsv<T>(text: string, columns: ColumnSpec<T>[], file: string
       row[spec.key] = v;
     }
     if (!ok) continue;
-    const t = row.t;
-    if (t <= prevT && !orderError) {
+    const t = row.t as number;
+    if ((allowEqual ? t < prevT : t <= prevT) && !orderError) {
       orderError = true;
-      issues.add('FXF_E_CSV_ORDER', `« t » non strictement croissant (${t} après ${prevT}).`, file, `ligne ${lineNo}`);
+      issues.add('FXF_E_CSV_ORDER', `« t » non ${allowEqual ? 'croissant' : 'strictement croissant'} (${t} après ${prevT}).`, file, `ligne ${lineNo}`);
     }
     prevT = Math.max(prevT, t);
     rows.push(row as T);
@@ -145,7 +171,7 @@ export function parseCsv<T>(text: string, columns: ColumnSpec<T>[], file: string
 }
 
 /** Formate un nombre sans notation scientifique ni zéros inutiles. */
-function formatNumber(v: number, kind: Kind, decimals: number): string {
+function formatNumber(v: number, kind: Exclude<Kind, 'text'>, decimals: number): string {
   if (!Number.isFinite(v)) throw new Error(`Valeur non finie : ${v}`);
   if (kind === 'int') {
     if (!Number.isInteger(v)) throw new Error(`Entier attendu : ${v}`);
@@ -160,25 +186,31 @@ const DECIMALS: Record<string, number> = { lat: 7, lon: 7, x: 5, y: 5, z: 5, hpa
 
 /**
  * Écrit un CSV FXF. Seules les colonnes obligatoires et celles qui ont au moins une valeur sont écrites.
- * Les lignes doivent déjà être triées par `t` strictement croissant.
+ * Les lignes doivent déjà être triées par `t` (strictement croissant, sauf `order: 'nondecreasing'`).
  */
-export function formatCsv<T>(rows: readonly T[], columns: ColumnSpec<T>[]): string {
+export function formatCsv<T>(rows: readonly T[], columns: ColumnSpec<T>[], options: CsvOptions = {}): string {
+  const allowEqual = options.order === 'nondecreasing';
   const used = columns.filter((c) => c.required || rows.some((r) => r[c.key] !== undefined && r[c.key] !== null));
   const out: string[] = [used.map((c) => c.name).join(',')];
   let prevT = -Infinity;
   for (const r of rows) {
     const t = r['t' as keyof T] as unknown as number;
-    if (!(t > prevT)) throw new Error(`Lignes non triées par t strictement croissant (${t} après ${prevT}).`);
+    if (!(allowEqual ? t >= prevT : t > prevT)) throw new Error(`Lignes non triées par t ${allowEqual ? 'croissant' : 'strictement croissant'} (${t} après ${prevT}).`);
     prevT = t;
     out.push(
       used
         .map((c) => {
-          const v = r[c.key] as unknown as number | undefined | null;
+          const v = r[c.key] as unknown as number | string | undefined | null;
           if (v === undefined || v === null) {
             if (c.required) throw new Error(`Valeur obligatoire « ${c.name} » manquante.`);
             return '';
           }
-          return formatNumber(v, c.kind, DECIMALS[c.name] ?? 3);
+          if (c.kind === 'text') {
+            const text = String(v);
+            if (c.pattern && !c.pattern.test(text)) throw new Error(`« ${c.name} » : valeur mal formée « ${text} ».`);
+            return text;
+          }
+          return formatNumber(v as number, c.kind, DECIMALS[c.name] ?? 3);
         })
         .join(','),
     );

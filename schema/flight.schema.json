@@ -39,8 +39,8 @@
         "trackLengthMeters": { "type": "number", "minimum": 0 },
         "straightDistanceMeters": { "type": "number", "minimum": 0 },
         "maxDistanceFromTakeoffMeters": { "type": "number", "minimum": 0 },
-        "maxAltitudeMeters": { "type": "number" },
-        "minAltitudeMeters": { "type": "number" },
+        "maxAltitudeMeters": { "type": "number", "description": "Metres above mean sea level only." },
+        "minAltitudeMeters": { "type": "number", "description": "Metres above mean sea level only." },
         "altitudeGainMeters": { "type": "number", "minimum": 0 },
         "maxClimbRate": { "type": "number", "minimum": 0 },
         "maxSinkRate": { "type": "number", "maximum": 0 },
@@ -69,8 +69,8 @@
             "gyroscope": { "type": "boolean" }
           }
         },
-        "geoidModel": { "type": "string", "minLength": 1, "maxLength": 50 },
-        "detection": { "enum": ["automatic", "manual"] },
+        "geoidModel": { "type": "string", "minLength": 1, "maxLength": 50, "description": "Geoid model or conversion service behind alt_msl. Recommended: EGM96, EGM2008, android.location.altitude." },
+        "detection": { "enum": ["automatic", "manual"], "description": "Whole recording. Omitted when takeoff and landing were determined differently." },
         "resumeCount": { "type": "integer", "minimum": 0 },
         "gaps": {
           "type": "array",
@@ -116,7 +116,8 @@
         "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
         "longitude": { "type": "number", "minimum": -180, "maximum": 180 },
         "altitude": { "type": "number", "description": "Metres above mean sea level." },
-        "siteName": { "type": "string", "maxLength": 200 }
+        "siteName": { "type": "string", "maxLength": 200 },
+        "detection": { "enum": ["automatic", "manual"], "description": "How this instant was determined (format 1.1)." }
       },
       "dependentRequired": { "latitude": ["longitude"], "longitude": ["latitude"] }
     },

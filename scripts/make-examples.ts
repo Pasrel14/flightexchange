@@ -11,7 +11,7 @@ import { unzipSync, zipSync, type Zippable } from 'fflate';
 import { writeFxf, type WriteInput } from '../src/writer.ts';
 import { formatCsv, TRACK_COLUMNS } from '../src/csv.ts';
 import { sha256Hex } from '../src/hash.ts';
-import type { FlightInfo, Manifest, TrackPoint } from '../src/types.ts';
+import type { FlightEvent, FlightInfo, Manifest, TrackPoint } from '../src/types.ts';
 import { syntheticFlight, TAKEOFF, LANDING, TAKEOFF_T, LANDING_T, GEOID_N, FLIGHT_S, TINY_PNG } from './synthetic.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -36,8 +36,8 @@ const completeFlight: FlightInfo = {
   activity: 'paragliding',
   title: 'Forclaz – Doussard, thermiques du matin',
   notes: 'Vol synthétique généré pour la spécification FXF.',
-  takeoff: { time: iso(TAKEOFF_T), latitude: TAKEOFF.lat, longitude: TAKEOFF.lon, altitude: TAKEOFF.alt, siteName: 'Col de la Forclaz' },
-  landing: { time: iso(LANDING_T), latitude: LANDING.lat, longitude: LANDING.lon, altitude: LANDING.alt, siteName: 'Doussard' },
+  takeoff: { time: iso(TAKEOFF_T), latitude: TAKEOFF.lat, longitude: TAKEOFF.lon, altitude: TAKEOFF.alt, siteName: 'Col de la Forclaz', detection: 'automatic' },
+  landing: { time: iso(LANDING_T), latitude: LANDING.lat, longitude: LANDING.lon, altitude: LANDING.alt, siteName: 'Doussard', detection: 'manual' },
   timezone: 'Europe/Paris',
   pilot: { name: 'Pilote Exemple' },
   equipment: {
@@ -60,7 +60,6 @@ const completeFlight: FlightInfo = {
     nominalIntervalMs: 1000,
     sensors: { barometer: true, accelerometer: true, gyroscope: true },
     geoidModel: 'EGM2008',
-    detection: 'automatic',
     resumeCount: 0,
     gaps: [{ start: iso(TAKEOFF_T + 699_000), end: iso(TAKEOFF_T + 706_000) }],
   },
@@ -68,12 +67,22 @@ const completeFlight: FlightInfo = {
   extensions: { 'com.flightrecorder': { sessionId: 42, engineVersion: '2.1' } },
 };
 
+// Décollage détecté automatiquement, atterrissage déclaré par le pilote (« J'ai atterri »).
+const completeEvents: FlightEvent[] = [
+  { t: TAKEOFF_T - 7_000, type: 'takeoff_candidate', value: 0.62 },
+  { t: TAKEOFF_T, type: 'takeoff_candidate', value: 0.94 },
+  { t: TAKEOFF_T, type: 'takeoff' },
+  { t: LANDING_T - 20_000, type: 'landing_candidate', value: 0.55 },
+  { t: LANDING_T, type: 'manual_landing' },
+];
+
 const minimalInput: WriteInput = { producer: PRODUCER, flight: minimalFlight, track: minimalTrack, createdAt: CREATED_AT };
 const completeInput: WriteInput = {
   producer: PRODUCER,
   flight: completeFlight,
   track: sim.track,
   sensors: { pressure: sim.pressure, accelerometer: sim.accelerometer, gyroscope: sim.gyroscope },
+  events: completeEvents,
   gpx: gpxOf(sim.track),
   media: [{ path: 'media/0001.png', data: TINY_PNG }],
   createdAt: CREATED_AT,
@@ -162,7 +171,29 @@ interface Case {
 
 const cases: Case[] = [
   { name: 'valid/minimal', description: 'Le strict minimum : id, activité, heure de décollage, trace t/lat/lon/alt_ellipsoid.', data: minimal, warnings: ['FXF_W_ELLIPSOID_ONLY'] },
-  { name: 'valid/complete', description: 'Toutes les données : capteurs, GPX, photo, extensions, trou GNSS.', data: complete },
+  { name: 'valid/complete', description: 'Toutes les données : capteurs, événements, GPX, photo, extensions, trou GNSS.', data: complete },
+  {
+    name: 'valid/format-1.0',
+    description: 'Fichier écrit en version 1.0 : toujours lu sans avertissement de version.',
+    data: await variant(minimal, (f) => setJson(f, 'manifest.json', { ...json(f, 'manifest.json'), formatVersion: '1.0' })),
+    warnings: ['FXF_W_ELLIPSOID_ONLY'],
+  },
+  {
+    name: 'valid/bad-events',
+    description: 'events.csv avec une confiance hors de 0–1 : événements écartés, vol importé.',
+    data: await variant(complete, (f) => {
+      f['events.csv'] = enc.encode(dec.decode(f['events.csv']).replace(',0.62\n', ',1.62\n'));
+    }),
+    warnings: ['FXF_W_EVENTS_DISCARDED'],
+  },
+  {
+    name: 'valid/custom-event-types',
+    description: 'Types d’événements inconnus : acceptés en lecture ; en mode strict, le type sans préfixe de domaine est refusé.',
+    data: await variant(complete, (f) => {
+      f['events.csv'] = enc.encode(dec.decode(f['events.csv']) + `${LANDING_T},com.flightrecorder.battery_low,0.15\n${LANDING_T + 1000},thermal_exit,\n`);
+    }),
+    strictErrors: ['FXF_E_STRICT'],
+  },
   {
     name: 'valid/no-landing',
     description: 'Vol interrompu (batterie vide) : pas de landing.',

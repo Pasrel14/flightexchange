@@ -22,10 +22,10 @@ FlightRecorder ──► flight.fxf (ZIP: manifest.json, flight.json, track.csv,
 
 | Path | Purpose |
 |---|---|
-| [SPECIFICATION.md](SPECIFICATION.md) | **the specification** (format 1.0) — it is authoritative |
+| [SPECIFICATION.md](SPECIFICATION.md) | **the specification** (format 1.1) — it is authoritative |
 | [schema/](schema/) | JSON Schema 2020-12 for `manifest.json` and `flight.json` |
 | [examples/](examples/) | `minimal.fxf` and `complete.fxf`, plus their unzipped contents for reading |
-| [tests/fixtures/](tests/fixtures/) | conformance suite: 24 valid/invalid archives + [`expected.json`](tests/fixtures/expected.json) |
+| [tests/fixtures/](tests/fixtures/) | conformance suite: 27 valid/invalid archives + [`expected.json`](tests/fixtures/expected.json) |
 | [src/](src/) | reference library: `readFxf`, `writeFxf`, lenient / strict validation |
 | [bin/fxf-validate.ts](bin/fxf-validate.ts) | command-line validator |
 
@@ -82,11 +82,11 @@ Two independent numbers:
 
 | | Example | Changes when |
 |---|---|---|
-| **Format version** (`formatVersion`) | `1.0` | the specification changes (§ 3) |
-| **Package version** (npm, `v*` tags) | `1.0.0` | the library changes; the package major follows the format major |
+| **Format version** (`formatVersion`) | `1.1` | the specification changes (§ 3) |
+| **Package version** (npm, `v*` tags) | `1.1.0` | the library changes; the package major follows the format major |
 
-A library fix (`1.0.1`) does not change the format; a minor format version (`1.1`) yields at least a minor
-package version (`1.1.0`). Details in [CHANGELOG.md](CHANGELOG.md).
+A library fix (`1.1.1`) does not change the format; a minor format version (`1.2`) yields at least a minor
+package version (`1.2.0`). Details in [CHANGELOG.md](CHANGELOG.md).
 
 ## Development
 

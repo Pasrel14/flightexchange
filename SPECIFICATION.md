@@ -1,10 +1,10 @@
-# Flight Exchange Format (FXF) — Specification 1.0
+# Flight Exchange Format (FXF) — Specification 1.1
 
 | | |
 |---|---|
-| Format version | **1.0** |
+| Format version | **1.1** (changes from 1.0: [appendix A](#appendix-a--changes-from-10)) |
 | Status | Working draft (adopted by FlightRecorder and FlightBook) |
-| Date | 2026-11-20 |
+| Date | 2026-11-26 |
 | Schemas | [`schema/manifest.schema.json`](schema/manifest.schema.json), [`schema/flight.schema.json`](schema/flight.schema.json) |
 
 The key words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT** and **MAY** in this document are to be
@@ -46,6 +46,7 @@ Principles:
 ├── manifest.json          REQUIRED  inventory, format version
 ├── flight.json            REQUIRED  flight description
 ├── track.csv              REQUIRED  reference GNSS track
+├── events.csv             optional  flight events (1.1)
 ├── sensors/               optional  raw sensor data
 │   ├── pressure.csv
 │   ├── accelerometer.csv
@@ -66,7 +67,7 @@ A producer MUST stay within these limits.
 
 ## 3. Versions and compatibility
 
-- `formatVersion` is `"MAJOR.MINOR"` (e.g. `"1.0"`).
+- `formatVersion` is `"MAJOR.MINOR"` (e.g. `"1.1"`).
 - **Minor**: backward-compatible additions only (new optional fields or files, new values in enumerations
   marked as extensible).
 - **Major**: any incompatible change.
@@ -92,7 +93,7 @@ A producer MUST stay within these limits.
 | Bearing | degrees, 0–360, true (not magnetic), clockwise from north |
 | Pressure | hectopascals (hPa) |
 | Acceleration | m/s², device frame (Android convention) |
-| Angular rate | rad/s, device frame |
+| Angular rate | rad/s, device frame, calibrated (drift-compensated, Android `TYPE_GYROSCOPE`) |
 | Identifiers | UUID (RFC 9562), lowercase |
 
 Converting units for display (km/h, km, feet…) is the consumer's business.
@@ -108,7 +109,7 @@ Three distinct altitudes may coexist. They are **never** mixed in the same colum
 | `alt_pressure` | ISA standard atmosphere, 1013.25 hPa (QNE) | barometer |
 
 In France the ellipsoid–geoid separation is about +50 m: confusing the two skews altitudes.
-If `alt_msl` is provided, `flight.json` MUST state the model used (`recording.geoidModel`).
+If `alt_msl` is provided, `flight.json` MUST state where it comes from (`recording.geoidModel`, § 6.4).
 
 Recommended display altitude for consumers: `alt_msl`; otherwise `alt_ellipsoid` corrected with the
 consumer's own geoid model; otherwise raw `alt_ellipsoid` (warning `FXF_W_ELLIPSOID_ONLY`).
@@ -123,7 +124,8 @@ All `.csv` files follow these rules (a subset of RFC 4180):
 - first line = header with column names; column order is free;
 - empty cell = absent value; `NaN`, `null`, `-` are forbidden;
 - scientific notation is forbidden;
-- rows sorted by `t` **strictly increasing** (the producer removes duplicates).
+- rows sorted by `t` **strictly increasing** (the producer removes duplicates), except in `events.csv`
+  where several events MAY share the same `t` (§ 8.1).
 
 ## 5. `manifest.json`
 
@@ -132,7 +134,7 @@ Archive inventory, readable without interpreting anything else. Schema: `schema/
 ```json
 {
   "format": "flight-exchange",
-  "formatVersion": "1.0",
+  "formatVersion": "1.1",
   "flightId": "3f0b8c1e-6a5d-4c1f-9a7e-2b4d8e9f0a12",
   "createdAt": "2026-11-20T11:20:04.512Z",
   "producer": { "name": "FlightRecorder", "version": "0.2.0", "platform": "android" },
@@ -154,7 +156,7 @@ Archive inventory, readable without interpreting anything else. Schema: `schema/
 | `producer.platform` | no | `android`, `ios`, `web`, `desktop`, `server`, … |
 | `files[]` | yes | every file in the archive **except** `manifest.json` itself |
 | `files[].path` | yes | path inside the archive |
-| `files[].role` | yes | `flight`, `track`, `sensor`, `track-igc`, `track-gpx`, `media`, `other` |
+| `files[].role` | yes | `flight`, `track`, `events` (1.1), `sensor`, `track-igc`, `track-gpx`, `media`, `other` |
 | `files[].mediaType` | no | MIME type |
 | `files[].size` | no | uncompressed size in bytes |
 | `files[].sha256` | no (SHOULD) | SHA-256 digest, lowercase hexadecimal |
@@ -173,8 +175,8 @@ Normalised flight description. Schema: `schema/flight.schema.json`.
   "revision": 1,
   "activity": "paragliding",
   "title": "Morning flight",
-  "takeoff": { "time": "2026-11-20T09:30:12.000Z", "latitude": 47.0571, "longitude": 6.6074, "altitude": 1102, "siteName": "Morteau" },
-  "landing": { "time": "2026-11-20T11:15:40.000Z", "latitude": 47.0702, "longitude": 6.5391, "altitude": 752 },
+  "takeoff": { "time": "2026-11-20T09:30:12.000Z", "latitude": 47.0571, "longitude": 6.6074, "altitude": 1102, "siteName": "Morteau", "detection": "automatic" },
+  "landing": { "time": "2026-11-20T11:15:40.000Z", "latitude": 47.0702, "longitude": 6.5391, "altitude": 752, "detection": "manual" },
   "timezone": "Europe/Paris",
   "pilot": { "name": "Example Pilot" },
   "equipment": { "glider": { "brand": "Ozone", "model": "Rush 6", "size": "MS", "certification": "EN-B" } },
@@ -184,7 +186,6 @@ Normalised flight description. Schema: `schema/flight.schema.json`.
     "locationProvider": "fused",
     "nominalIntervalMs": 1000,
     "sensors": { "barometer": true, "accelerometer": true, "gyroscope": true },
-    "detection": "automatic",
     "resumeCount": 0
   }
 }
@@ -210,8 +211,12 @@ Normalised flight description. Schema: `schema/flight.schema.json`.
 
 ### 6.2 Takeoff / landing points
 
-`{ time, latitude?, longitude?, altitude?, siteName? }`. `altitude` is in metres above mean sea level;
-if the producer can only provide an ellipsoidal altitude, it omits it.
+`{ time, latitude?, longitude?, altitude?, siteName?, detection? }`. `altitude` is in metres above mean sea
+level; if the producer can only provide an ellipsoidal altitude, it omits it.
+
+`detection` (1.1) states how this instant was determined: `automatic` (detected by the producer) or `manual`
+(declared or corrected by the pilot). Omitted when unknown. Takeoff and landing MAY differ, e.g. an
+automatic takeoff followed by a manual "I have landed".
 The takeoff `time` MUST lie within the time range covered by `track.csv`.
 
 The track MAY extend before takeoff and after landing (producer's ring buffer, waiting on the ground):
@@ -228,8 +233,8 @@ All optional, computed by the producer over the interval [takeoff, landing]:
 | `trackLengthMeters` | m, sum of segments |
 | `straightDistanceMeters` | m, takeoff → landing |
 | `maxDistanceFromTakeoffMeters` | m |
-| `maxAltitudeMeters`, `minAltitudeMeters` | m (display reference, § 4.1) |
-| `altitudeGainMeters` | m, cumulative positive gain |
+| `maxAltitudeMeters`, `minAltitudeMeters` | m above **mean sea level** only; a producer without an MSL altitude for most of the flight MUST omit them (never ellipsoidal nor pressure altitude) |
+| `altitudeGainMeters` | m, cumulative positive gain, on the altitude source the producer finds most reliable (often `alt_pressure`) |
 | `maxClimbRate` | m/s (> 0) |
 | `maxSinkRate` | m/s (< 0) |
 | `maxGroundSpeed` | m/s |
@@ -245,10 +250,20 @@ for previews and cross-checking.
 | `locationProvider` | `fused`, `platform`, `external`, `simulated`, `mixed` |
 | `nominalIntervalMs` | target GNSS interval in flight (e.g. 1000) |
 | `sensors` | `{ barometer, accelerometer, gyroscope }`: sensors **present on the device** (booleans) |
-| `geoidModel` | model used for `alt_msl` (e.g. `EGM2008`); required if that column exists |
-| `detection` | `automatic` or `manual` (started/stopped by the pilot) |
+| `geoidModel` | source of `alt_msl`: geoid model **or** conversion service; required if that column exists (see below) |
+| `detection` | `automatic` or `manual`: how the recording as a whole was started and stopped. When takeoff and landing were determined differently, the producer SHOULD omit it and use `takeoff.detection` / `landing.detection` (6.2) |
 | `resumeCount` | number of resumptions after an interruption during the flight |
-| `gaps[]` | `{ start, end }`: known gaps in the track (GNSS loss, killed process) |
+| `gaps[]` | `{ start, end }`: known gaps in the track (see below) |
+
+**`geoidModel`** identifies the geoid model or, when the platform does not document it, the conversion
+service that produced `alt_msl`. Recommended values: `EGM96`, `EGM2008`, `android.location.altitude`
+(Android `AltitudeConverter` or `Location.getMslAltitudeMeters()`, model not documented). Other values are
+allowed. A consumer treats it as information only and MUST NOT reject an unknown value.
+
+**`gaps[]`** lists **unplanned** losses: intervals where fixes are missing compared with the interval
+expected at that moment (GNSS loss, process killed). Deliberately sparse sampling (e.g. one fix every 10 s
+while waiting on the ground) is not a gap. A gap MAY extend beyond [takeoff, landing]; a producer SHOULD
+declare at least the gaps that overlap the flight.
 
 A `simulated` file MUST be flagged to the user by the consumer (`FXF_W_SIMULATED`).
 
@@ -265,11 +280,11 @@ This is the **only source of truth** for position. At least **2 rows**.
 | `alt_msl` | no | decimal | m, § 4.1 |
 | `alt_pressure` | no | decimal | m, QNE pressure altitude at the same instant (§ 4.1) |
 | `h_acc` | no | decimal | horizontal accuracy, m (68 % radius) |
-| `v_acc` | no | decimal | vertical accuracy, m |
+| `v_acc` | no | decimal | vertical accuracy, m (68 %) |
 | `speed` | no | decimal | ground speed measured by GNSS, m/s |
-| `bearing` | no | decimal | ground track, degrees |
+| `bearing` | no | decimal | ground track, degrees, true north |
 | `sats` | no | integer | satellites used |
-| `elapsed_ns` | no | integer | device monotonic clock, ns (diagnostics) |
+| `elapsed_ns` | no | integer | device monotonic clock, ns (diagnostics only, see below) |
 
 Example:
 
@@ -283,7 +298,10 @@ Rules:
 
 - a row is only written when the GNSS provided a fix; gaps stay gaps;
 - `alt_pressure` is only filled in when a barometer sample is available within ±2 s;
-- at least one of the `alt_ellipsoid`, `alt_msl` columns SHOULD exist (otherwise `FXF_W_NO_GNSS_ALTITUDE`).
+- at least one of the `alt_ellipsoid`, `alt_msl` columns SHOULD exist (otherwise `FXF_W_NO_GNSS_ALTITUDE`);
+- `elapsed_ns` (here and in § 8) is for diagnostics only. A consumer MUST use `t` to align files and MUST NOT
+  assume that the `elapsed_ns` values of different files share the same clock (on Android, GNSS and sensor
+  timestamps share `elapsedRealtime` on recent devices only).
 
 ## 8. `sensors/` — raw sensor data (optional)
 
@@ -300,11 +318,58 @@ Same CSV rules as § 4.2. Samples MAY cover a wider interval than the flight.
 A producer MAY downsample to limit size; it MUST NOT interpolate.
 A consumer that does not use a sensor simply ignores it.
 
+Since `t` has millisecond resolution and is strictly increasing, very high rates lose samples.
+A producer SHOULD keep sensors at **100 Hz or less**, downsampling by keeping existing samples (decimation),
+never by interpolating.
+
+### 8.1 `events.csv` — flight events (optional, 1.1)
+
+Events produced by the recorder's detection engine or by the pilot (role `events`).
+
+| Column | Req. | Type | Description |
+|---|---|---|---|
+| `t` | **yes** | integer | UTC instant, ms |
+| `type` | **yes** | text | event type (see below) |
+| `value` | no | decimal | meaning depends on the type |
+
+| `type` | `value` | Meaning |
+|---|---|---|
+| `takeoff_candidate` | confidence, 0–1 | the engine suspects a takeoff |
+| `takeoff` | — | takeoff confirmed automatically |
+| `landing_candidate` | confidence, 0–1 | the engine suspects a landing |
+| `landing` | — | landing confirmed automatically |
+| `manual_takeoff` | — | takeoff declared or corrected by the pilot |
+| `manual_landing` | — | landing declared or corrected by the pilot |
+| `interruption` | — | recording interrupted (process killed, battery) |
+| `resume` | — | recording resumed after an interruption |
+
+Rules:
+
+- same CSV rules as § 4.2, except that `t` is **non-decreasing**: several events MAY share an instant;
+- `type` matches `[a-z][a-z0-9_]*`, optionally prefixed by a reverse domain name. The list is extensible:
+  a consumer MUST ignore types it does not know. Producer-specific types MUST carry the prefix
+  (`com.flightrecorder.thermal_entry`); in strict mode an unprefixed type not defined above is an error;
+- `value` of the `*_candidate` types lies in 0–1;
+- `flight.json` → `takeoff.time` / `landing.time` remain authoritative: events document how they were found;
+- like a sensor, an invalid `events.csv` does not prevent importing the flight (`FXF_W_EVENTS_DISCARDED`).
+
+Example:
+
+```csv
+t,type,value
+1795167005000,takeoff_candidate,0.62
+1795167012000,takeoff_candidate,0.94
+1795167012000,takeoff,
+1795173340000,manual_landing,
+```
+
 ## 9. Derived files and media
 
 - `track.igc` (role `track-igc`) and `track.gpx` (role `track-gpx`) are **convenience copies** generated
   from the same data, for third-party tools. An FXF consumer MUST use `track.csv`; it MAY offer to download
   the copies as they are.
+- A `track.igc` copy is **not** assumed to carry a valid security record (G record). A consumer MUST NOT
+  present it as validated for competitions or record claims.
 - `media/` contains JPEG, PNG or WebP images (role `media`), described in `flight.json` → `media[]`.
 
 ## 10. Extensions
@@ -333,8 +398,8 @@ minor version.
    increasing, at least 2 rows.
 6. Consistency: `takeoff.time` (and `landing.time`) within the track's time range, `landing` after `takeoff`,
    `geoidModel` present if `alt_msl` exists, declared media present.
-7. Sensors: same checks as in 5; an error in an optional sensor **does not prevent** importing the flight
-   (the sensor is discarded and reported).
+7. Sensors and events: same checks as in 5 (§ 8.1 for events); an error in an optional sensor or in
+   `events.csv` **does not prevent** importing the flight (the file is discarded and reported).
 
 An **error** (`FXF_E_*`) prevents the import. A **warning** (`FXF_W_*`) is shown in the import report.
 
@@ -380,6 +445,7 @@ in strict mode.
 | `FXF_W_UNLISTED_FILE` | warning | file missing from the manifest, ignored |
 | `FXF_W_UNKNOWN_COLUMN` | warning | unknown CSV column, ignored |
 | `FXF_W_SENSOR_DISCARDED` | warning | invalid sensor, discarded |
+| `FXF_W_EVENTS_DISCARDED` | warning | invalid `events.csv`, discarded (1.1) |
 | `FXF_W_ELLIPSOID_ONLY` | warning | only the ellipsoidal altitude is provided |
 | `FXF_W_NO_GNSS_ALTITUDE` | warning | no GNSS altitude |
 | `FXF_W_SIMULATED` | warning | simulated track |
@@ -395,9 +461,27 @@ The exchanged content is always the `.fxf` archive, byte for byte.
 | API | `POST /flights` with `Content-Type: application/vnd.flight-exchange+zip`; response: import report (codes § 11.4); `409` if the `id` exists with a revision ≥ |
 | Direct | same archive, another channel (Bluetooth, local network, intermediate cloud) |
 
-## 13. Future work (not in 1.0)
+## 13. Future work
 
 - Several flights per archive (a whole day).
-- Flight events (inflation, thermals, stalls) and wind data.
-- Archive signature (authenticity for competitions).
+- Standard types for in-flight events (inflation, thermals, stalls) and wind data.
+- Navigation: goal and waypoints used during the flight (e.g. `navigation.goal` or a `waypoints.gpx` file).
+- Archive and IGC signature (authenticity for competitions).
 - External sensors (BLE variometers).
+
+## Appendix A — Changes from 1.0
+
+All changes are backward-compatible: a 1.0 file is a valid 1.1 file, and a 1.0 consumer reads a 1.1 file
+(it reports `FXF_W_NEWER_MINOR` and ignores what it does not know).
+
+| § | Change |
+|---|---|
+| 6.2 | new optional `takeoff.detection` and `landing.detection` (`automatic`, `manual`) |
+| 6.4 | `recording.detection` describes the whole recording; omitted when takeoff and landing differ |
+| 6.4 | `geoidModel` MAY name a conversion service; recommended values `EGM96`, `EGM2008`, `android.location.altitude` |
+| 6.4 | definition of `gaps[]`: unplanned losses only; MAY extend beyond the flight |
+| 6.3 | `maxAltitudeMeters` / `minAltitudeMeters`: MSL only, otherwise omitted |
+| 7 | `v_acc` is a 68 % value; `bearing` is relative to true north; `elapsed_ns` is diagnostics only, with no clock shared across files |
+| 4, 8 | the gyroscope is calibrated; sensors SHOULD stay at or below 100 Hz (decimation) |
+| 8.1 | new optional `events.csv` file (role `events`), warning `FXF_W_EVENTS_DISCARDED` |
+| 9 | an IGC copy is not assumed to be signed |

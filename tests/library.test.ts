@@ -72,6 +72,14 @@ describe('writer', () => {
   it('refuse d’écrire un fichier non conforme', async () => {
     await expect(writeFxf({ ...input, flight: { ...input.flight, extra: 1 } as never })).rejects.toThrow(/FXF_E_STRICT/);
     await expect(writeFxf({ ...input, flight: { ...input.flight, takeoff: { time: new Date(99_000).toISOString() } } })).rejects.toThrow(/FXF_E_INCONSISTENT/);
+    await expect(writeFxf({ ...input, events: [{ t: 0, type: 'thermal' }] })).rejects.toThrow(/FXF_E_STRICT/);
+  });
+
+  it('écrit events.csv avec des instants égaux', async () => {
+    const events = [{ t: 1, type: 'takeoff_candidate', value: 0.9 }, { t: 1, type: 'takeoff' }, { t: 2, type: 'com.example.note' }];
+    const { ok, fxf, issues } = await readFxf(await writeFxf({ ...input, events }), { strict: true });
+    expect(ok, JSON.stringify(issues)).toBe(true);
+    expect(fxf!.events).toEqual(events);
   });
 });
 

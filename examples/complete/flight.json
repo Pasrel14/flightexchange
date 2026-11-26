@@ -9,14 +9,16 @@
     "latitude": 45.81302,
     "longitude": 6.24651,
     "altitude": 1255,
-    "siteName": "Col de la Forclaz"
+    "siteName": "Col de la Forclaz",
+    "detection": "automatic"
   },
   "landing": {
     "time": "2026-08-14T11:27:00.000Z",
     "latitude": 45.78363,
     "longitude": 6.22098,
     "altitude": 452,
-    "siteName": "Doussard"
+    "siteName": "Doussard",
+    "detection": "manual"
   },
   "timezone": "Europe/Paris",
   "pilot": {
@@ -59,7 +61,6 @@
       "gyroscope": true
     },
     "geoidModel": "EGM2008",
-    "detection": "automatic",
     "resumeCount": 0,
     "gaps": [
       {

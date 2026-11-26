@@ -1,18 +1,18 @@
 /**
- * Types TypeScript du Flight Exchange Format 1.0.
+ * Types TypeScript du Flight Exchange Format 1.1.
  * Ils reflètent schema/*.schema.json et SPECIFICATION.md ; en cas de divergence, la spécification fait foi.
  */
 
 export const FORMAT_NAME = 'flight-exchange';
 /** Version du format implémentée par cette bibliothèque. */
-export const FORMAT_VERSION = '1.0';
+export const FORMAT_VERSION = '1.1';
 export const MEDIA_TYPE = 'application/vnd.flight-exchange+zip';
 export const FILE_EXTENSION = '.fxf';
 
 /** Instant ISO 8601 UTC, ex. `2026-11-20T09:30:00.000Z`. */
 export type Instant = string;
 
-export type FileRole = 'flight' | 'track' | 'sensor' | 'track-igc' | 'track-gpx' | 'media' | 'other';
+export type FileRole = 'flight' | 'track' | 'events' | 'sensor' | 'track-igc' | 'track-gpx' | 'media' | 'other';
 
 export interface ManifestFile {
   path: string;
@@ -41,7 +41,11 @@ export interface Place {
   /** Mètres au-dessus du niveau moyen de la mer. */
   altitude?: number;
   siteName?: string;
+  /** Format 1.1 : détection automatique ou déclaration/correction par le pilote. */
+  detection?: Detection;
 }
+
+export type Detection = 'automatic' | 'manual';
 
 export interface GearRef {
   brand?: string;
@@ -73,7 +77,7 @@ export interface Recording {
   nominalIntervalMs?: number;
   sensors?: { barometer?: boolean; accelerometer?: boolean; gyroscope?: boolean };
   geoidModel?: string;
-  detection?: 'automatic' | 'manual';
+  detection?: Detection;
   resumeCount?: number;
   gaps?: { start: Instant; end: Instant }[];
 }
@@ -133,6 +137,26 @@ export interface VectorSample {
   z: number;
 }
 
+/** Types d'événements définis par la spécification (§ 8.1). Liste extensible. */
+export const EVENT_TYPES = [
+  'takeoff_candidate',
+  'takeoff',
+  'landing_candidate',
+  'landing',
+  'manual_takeoff',
+  'manual_landing',
+  'interruption',
+  'resume',
+] as const;
+export type EventType = (typeof EVENT_TYPES)[number];
+
+/** Une ligne de events.csv (format 1.1). */
+export interface FlightEvent {
+  t: number;
+  type: EventType | (string & {});
+  value?: number;
+}
+
 export interface Sensors {
   pressure?: PressureSample[];
   accelerometer?: VectorSample[];
@@ -155,6 +179,8 @@ export interface FxfFlight {
   flight: FlightInfo;
   track: TrackPoint[];
   sensors: Sensors;
+  /** Événements (events.csv, format 1.1) ; absent si le fichier n'existe pas ou a été écarté. */
+  events?: FlightEvent[];
   /** Copies dérivées éventuelles (texte brut). */
   igc?: string;
   gpx?: string;

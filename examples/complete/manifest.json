@@ -1,6 +1,6 @@
 {
   "format": "flight-exchange",
-  "formatVersion": "1.0",
+  "formatVersion": "1.1",
   "flightId": "7d9e1f20-3a4b-4c5d-9e6f-7a8b9c0d1e2f",
   "createdAt": "2026-08-14T11:40:00.000Z",
   "producer": {
@@ -13,8 +13,8 @@
       "path": "flight.json",
       "role": "flight",
       "mediaType": "application/json",
-      "size": 1878,
-      "sha256": "c6010cf7fb7808085925f3231ab158c71c47e7630b7b57af45d882d1cbe81cd5"
+      "size": 1905,
+      "sha256": "d14f3877a54968e526af4ddb9b0738a9eec19d3ebc9aa43d710a5293dd2dcfde"
     },
     {
       "path": "track.csv",
@@ -22,6 +22,13 @@
       "mediaType": "text/csv",
       "size": 146639,
       "sha256": "941962b3d6a587f455643646ab2f074cb5d97c4e834e8b8b23ab8a22ffe609c7"
+    },
+    {
+      "path": "events.csv",
+      "role": "events",
+      "mediaType": "text/csv",
+      "size": 177,
+      "sha256": "194424517989204dee7384ff0ebdcf88743d110e822cd356a7e30f491e66dca4"
     },
     {
       "path": "sensors/pressure.csv",

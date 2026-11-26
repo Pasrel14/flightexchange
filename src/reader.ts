@@ -1,12 +1,14 @@
 /** Lecture et validation d'une archive FXF (SPECIFICATION.md § 11.1). */
 
 import { unzipSync, type UnzipFileInfo } from 'fflate';
-import { PRESSURE_COLUMNS, VECTOR_COLUMNS, TRACK_COLUMNS, parseCsv } from './csv.ts';
+import { EVENT_COLUMNS, PRESSURE_COLUMNS, VECTOR_COLUMNS, TRACK_COLUMNS, parseCsv } from './csv.ts';
 import { Issues, type Issue } from './issues.ts';
 import { validateDocument } from './schema.ts';
 import { sha256Hex } from './hash.ts';
 import {
+  EVENT_TYPES,
   FORMAT_VERSION,
+  type FlightEvent,
   type FlightInfo,
   type FxfFlight,
   type Manifest,
@@ -42,7 +44,7 @@ const SENSOR_FILES: Record<string, SensorName> = {
   'sensors/magnetometer.csv': 'magnetometer',
 };
 
-const KNOWN_ROLES = new Set(['flight', 'track', 'sensor', 'track-igc', 'track-gpx', 'media', 'other']);
+const KNOWN_ROLES = new Set(['flight', 'track', 'events', 'sensor', 'track-igc', 'track-gpx', 'media', 'other']);
 
 export function isSafePath(p: string): boolean {
   return (
@@ -97,6 +99,21 @@ function unzip(data: Uint8Array, issues: Issues): Record<string, Uint8Array> | u
     issues.add('FXF_E_NOT_ZIP', `Archive ZIP illisible : ${(e as Error).message}`);
     return undefined;
   }
+}
+
+const KNOWN_EVENT_TYPES = new Set<string>(EVENT_TYPES);
+
+/** Contrôles propres à events.csv (§ 8.1), au-delà du format CSV. */
+function checkEvents(events: FlightEvent[], file: string, issues: Issues, strict: boolean): void {
+  events.forEach((e, i) => {
+    const line = `ligne ${i + 2}`;
+    if (e.type.endsWith('_candidate') && KNOWN_EVENT_TYPES.has(e.type) && e.value !== undefined && (e.value < 0 || e.value > 1)) {
+      issues.add('FXF_E_CSV_VALUE', `« value » : confiance ${e.value} hors de 0–1.`, file, line);
+    }
+    if (strict && !e.type.includes('.') && !KNOWN_EVENT_TYPES.has(e.type)) {
+      issues.add('FXF_E_STRICT', `Type d’événement « ${e.type} » non défini : préfixez-le par un nom de domaine inversé.`, file, line);
+    }
+  });
 }
 
 function inRange(iso: string, first: number, last: number): boolean {
@@ -223,10 +240,29 @@ export async function readFxf(data: Uint8Array | ArrayBuffer, options: ReadOptio
   const media: MediaFile[] = [];
   let igc: string | undefined;
   let gpx: string | undefined;
+  let events: FlightEvent[] | undefined;
   for (const entry of manifest.files) {
     const content = files[entry.path];
     if (!content || entry.path === 'flight.json' || entry.path === 'track.csv') continue;
-    if (entry.role === 'sensor') {
+    if (entry.role === 'events') {
+      if (entry.path !== 'events.csv' || events) {
+        issues.add('FXF_W_UNKNOWN_FILE', 'Fichier d’événements inattendu (seul events.csv est défini) : ignoré.', entry.path);
+        ignoredFiles.push(entry.path);
+        continue;
+      }
+      const local = new Issues();
+      const rows = parseCsv(decoder.decode(content), EVENT_COLUMNS, entry.path, local, { order: 'nondecreasing' });
+      if (rows) checkEvents(rows, entry.path, local, strict);
+      // FXF_E_STRICT (type non préfixé) vise le producteur : il reste une erreur sans écarter le fichier.
+      if (rows && !local.list.some((i) => i.severity === 'error' && i.code !== 'FXF_E_STRICT')) {
+        events = rows;
+        for (const i of local.list) issues.list.push(i);
+      } else {
+        const detail = local.list.map((i) => i.message + (i.location ? ` (${i.location})` : '')).join(' ');
+        issues.add('FXF_W_EVENTS_DISCARDED', `Événements écartés : ${detail}`, entry.path);
+        ignoredFiles.push(entry.path);
+      }
+    } else if (entry.role === 'sensor') {
       const name = SENSOR_FILES[entry.path];
       if (!name) {
         issues.add('FXF_W_UNKNOWN_FILE', 'Capteur inconnu : ignoré.', entry.path);
@@ -254,7 +290,7 @@ export async function readFxf(data: Uint8Array | ArrayBuffer, options: ReadOptio
   if (issues.hasErrors) return { ok: false, issues: issues.list, ignoredFiles };
   return {
     ok: true,
-    fxf: { manifest, flight, track, sensors, media, ...(igc !== undefined ? { igc } : {}), ...(gpx !== undefined ? { gpx } : {}) },
+    fxf: { manifest, flight, track, sensors, media, ...(events ? { events } : {}), ...(igc !== undefined ? { igc } : {}), ...(gpx !== undefined ? { gpx } : {}) },
     issues: issues.list,
     ignoredFiles,
   };

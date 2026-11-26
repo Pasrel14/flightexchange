@@ -44,6 +44,12 @@ describe('examples', () => {
     expect(fxf!.sensors.pressure!.length).toBeGreaterThan(1000);
     expect(fxf!.sensors.accelerometer![0]).toMatchObject({ x: expect.any(Number), y: expect.any(Number), z: expect.any(Number) });
     expect(fxf!.gpx).toContain('<gpx');
+    expect(fxf!.flight.takeoff.detection).toBe('automatic');
+    expect(fxf!.flight.landing?.detection).toBe('manual');
+    // deux événements au même instant : t croissant au sens large
+    expect(fxf!.events!.map((e) => e.type)).toEqual(['takeoff_candidate', 'takeoff_candidate', 'takeoff', 'landing_candidate', 'manual_landing']);
+    expect(fxf!.events![0].value).toBe(0.62);
+    expect(fxf!.events![2].value).toBeUndefined();
     expect(fxf!.media.map((m) => m.path)).toEqual(['media/0001.png']);
     // le trou GNSS déclaré est bien un trou dans la trace (rien d'interpolé)
     const gap = fxf!.flight.recording!.gaps![0];
@@ -56,6 +62,7 @@ describe('examples', () => {
     expect(fxf!.track[0].altMsl).toBeUndefined();
     expect(fxf!.track[0].speed).toBeUndefined();
     expect(fxf!.sensors).toEqual({});
+    expect(fxf!.events).toBeUndefined();
     expect(fxf!.flight.landing).toBeUndefined();
   });
 });

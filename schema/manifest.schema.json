@@ -33,7 +33,7 @@
           },
           "role": {
             "type": "string",
-            "description": "flight, track, sensor, track-igc, track-gpx, media, other. Consumers ignore unknown roles.",
+            "description": "flight, track, events, sensor, track-igc, track-gpx, media, other. Consumers ignore unknown roles.",
             "minLength": 1
           },
           "mediaType": { "type": "string", "minLength": 1 },

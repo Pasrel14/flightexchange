@@ -1,6 +1,6 @@
 {
   "format": "flight-exchange",
-  "formatVersion": "1.0",
+  "formatVersion": "1.1",
   "flightId": "0b6a2f4e-1c3d-4e5f-8a9b-0c1d2e3f4a5b",
   "createdAt": "2026-08-14T11:40:00.000Z",
   "producer": {

@@ -1,0 +1,6 @@
+t,type,value
+1786705313000,takeoff_candidate,0.62
+1786705320000,takeoff_candidate,0.94
+1786705320000,takeoff,
+1786706800000,landing_candidate,0.55
+1786706820000,manual_landing,

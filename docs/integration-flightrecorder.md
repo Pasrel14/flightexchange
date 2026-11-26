@@ -10,10 +10,12 @@ Ce qu'il faut faire côté Android pour exporter des `.fxf` conformes, établi d
 | `flight.id` (UUID) | **à créer** : colonne `uuid` sur `FlightEntity`, générée à la création du vol, jamais régénérée (migration Room) |
 | `flight.revision` | **à créer** : entier, +1 quand le vol est redécoupé ou recalculé |
 | `takeoff.time` / `landing.time` | `FlightEntity.takeoffUtc` / `landingUtc` (`landing` omis si `null`) |
+| `takeoff.detection` / `landing.detection` (1.1) | `automatic` ou `manual` (« J'ai atterri ») quand l'information est stockée ; sinon omis |
+| `events.csv` (1.1) | événements du moteur de détection : candidats avec score, confirmations, déclarations manuelles, reprises |
 | `track.csv` → `t` | `TrackPointEntity.timeUtc` |
 | `lat`, `lon` | `latitude`, `longitude` |
 | `alt_ellipsoid` | `altitudeGps` (Android = ellipsoïde WGS84, cf. `docs/decisions/phase-1.md`) |
-| `alt_msl` | `AltitudeConverter.addMslAltitudeToLocation()` (API 34+) ; sinon colonne absente. Renseigner `recording.geoidModel` |
+| `alt_msl` | `AltitudeConverter.addMslAltitudeToLocation()` (API 34+) ; sinon colonne absente. Renseigner `recording.geoidModel` = `android.location.altitude` (format 1.1) |
 | `alt_pressure` | `altitudeBaro` (déjà en QNE via `Atmosphere.pressureAltitude`, appariée à ±2 s) |
 | `h_acc`, `v_acc`, `speed`, `bearing` | `horizontalAccuracy`, `verticalAccuracy`, `speed`, `bearing` |
 | `elapsed_ns` | `elapsedRealtimeNanos` |
@@ -23,13 +25,14 @@ Ce qu'il faut faire côté Android pour exporter des `.fxf` conformes, établi d
 | `recording.device` | `RecordingSessionEntity.deviceModel`, `Build.MANUFACTURER`, `Build.VERSION.RELEASE` |
 | `recording.resumeCount` | `RecordingSessionEntity.resumeCount` |
 | `recording.sensors` | `SensorAvailability` / `DeviceConfigurationEntity` |
-| `statistics` | `FlightStatisticsEntity` (convertir si besoin : tout en m, s, m/s ; `maxSinkRate` négatif) |
+| `statistics` | `FlightStatisticsEntity` (convertir si besoin : tout en m, s, m/s ; `maxSinkRate` négatif ; `max/minAltitudeMeters` en MSL uniquement, sinon omis) |
 | `extensions["com.flightrecorder"]` | `sessionId`, version du moteur… |
 
 Points d'attention :
 
 - La trace exportée PEUT inclure le tampon avant décollage et quelques secondes après l'atterrissage : ce sont les
   points de la session dans `[takeoff − marge, landing + marge]`.
+- `recording.gaps` : seulement les pertes imprévues (pas l'échantillonnage espacé de la surveillance au sol).
 - Trier par `timeUtc` et **supprimer les doublons de `t`** (une reprise après interruption peut en créer).
 - Ne jamais écrire `0` pour une valeur `null` : cellule vide.
 - Format des nombres : `Locale.ROOT` (point décimal), pas de notation scientifique (`BigDecimal.toPlainString()`
@@ -49,7 +52,7 @@ Points d'attention :
 ## Prompt pour Claude Code (dans FlightRecorder)
 
 > Consulte https://github.com/Pasrel14/flightexchange (SPECIFICATION.md, schema/, examples/, docs/integration-flightrecorder.md).
-> Implémente l'export d'un vol au format FXF 1.0 dans un module dédié (ex. `export`), en Kotlin pur pour la
+> Implémente l'export d'un vol au format FXF 1.1 dans un module dédié (ex. `export`), en Kotlin pur pour la
 > construction de l'archive et testable sans Android. Ajoute l'UUID et la révision du vol (migration Room).
 > Respecte intégralement le mode strict : unités, altitudes séparées, cellules vides pour les valeurs absentes,
 > tri et dédoublonnage par `t`, manifeste avec `size` et `sha256`. Ajoute des tests unitaires et un test qui

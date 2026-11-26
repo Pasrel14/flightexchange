@@ -8,10 +8,35 @@
     ]
   },
   "valid/complete.fxf": {
-    "description": "Toutes les données : capteurs, GPX, photo, extensions, trou GNSS.",
+    "description": "Toutes les données : capteurs, événements, GPX, photo, extensions, trou GNSS.",
     "ok": true,
     "errors": [],
     "warnings": []
+  },
+  "valid/format-1.0.fxf": {
+    "description": "Fichier écrit en version 1.0 : toujours lu sans avertissement de version.",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "FXF_W_ELLIPSOID_ONLY"
+    ]
+  },
+  "valid/bad-events.fxf": {
+    "description": "events.csv avec une confiance hors de 0–1 : événements écartés, vol importé.",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "FXF_W_EVENTS_DISCARDED"
+    ]
+  },
+  "valid/custom-event-types.fxf": {
+    "description": "Types d’événements inconnus : acceptés en lecture ; en mode strict, le type sans préfixe de domaine est refusé.",
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "strictErrors": [
+      "FXF_E_STRICT"
+    ]
   },
   "valid/no-landing.fxf": {
     "description": "Vol interrompu (batterie vide) : pas de landing.",

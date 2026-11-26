@@ -1,13 +1,14 @@
 /** Écriture d'une archive FXF conforme (implémentation de référence pour les producteurs). */
 
 import { zipSync, type Zippable } from 'fflate';
-import { PRESSURE_COLUMNS, TRACK_COLUMNS, VECTOR_COLUMNS, formatCsv } from './csv.ts';
+import { EVENT_COLUMNS, PRESSURE_COLUMNS, TRACK_COLUMNS, VECTOR_COLUMNS, formatCsv } from './csv.ts';
 import { sha256Hex } from './hash.ts';
 import { readFxf } from './reader.ts';
 import {
   FORMAT_NAME,
   FORMAT_VERSION,
   type FileRole,
+  type FlightEvent,
   type FlightInfo,
   type Manifest,
   type ManifestFile,
@@ -21,6 +22,8 @@ export interface WriteInput {
   flight: FlightInfo;
   track: readonly TrackPoint[];
   sensors?: Sensors;
+  /** events.csv (format 1.1), trié par t croissant. */
+  events?: readonly FlightEvent[];
   igc?: string;
   gpx?: string;
   media?: MediaFile[];
@@ -45,6 +48,7 @@ export async function writeFxf(input: WriteInput, options: WriteOptions = {}): P
 
   add('flight.json', 'flight', 'application/json', JSON.stringify(input.flight, null, 2) + '\n');
   add('track.csv', 'track', 'text/csv', formatCsv(input.track, TRACK_COLUMNS));
+  if (input.events?.length) add('events.csv', 'events', 'text/csv', formatCsv(input.events, EVENT_COLUMNS, { order: 'nondecreasing' }));
   const s = input.sensors ?? {};
   if (s.pressure?.length) add('sensors/pressure.csv', 'sensor', 'text/csv', formatCsv(s.pressure, PRESSURE_COLUMNS));
   for (const name of ['accelerometer', 'gyroscope', 'magnetometer'] as const) {
