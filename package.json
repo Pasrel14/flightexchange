@@ -1,12 +1,28 @@
 {
   "name": "flight-exchange",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Flight Exchange Format (FXF): an open, versioned file format for exchanging free-flight recordings (paragliding, hang gliding). Specification, JSON Schemas, conformance suite and reference reader/writer/validator.",
-  "keywords": ["paragliding", "hang-gliding", "free-flight", "flight-log", "gps-track", "igc", "gpx", "file-format", "json-schema", "fxf"],
+  "keywords": [
+    "paragliding",
+    "hang-gliding",
+    "free-flight",
+    "flight-log",
+    "gps-track",
+    "igc",
+    "gpx",
+    "file-format",
+    "json-schema",
+    "fxf"
+  ],
   "license": "MIT",
-  "repository": { "type": "git", "url": "git+https://github.com/Pasrel14/flightexchange.git" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pasrel14/flightexchange.git"
+  },
   "homepage": "https://github.com/Pasrel14/flightexchange#readme",
-  "bugs": { "url": "https://github.com/Pasrel14/flightexchange/issues" },
+  "bugs": {
+    "url": "https://github.com/Pasrel14/flightexchange/issues"
+  },
   "type": "module",
   "sideEffects": false,
   "exports": {
@@ -19,7 +35,9 @@
     "./package.json": "./package.json"
   },
   "types": "./dist/src/index.d.ts",
-  "bin": { "fxf-validate": "dist/bin/fxf-validate.js" },
+  "bin": {
+    "fxf-validate": "dist/bin/fxf-validate.js"
+  },
   "files": [
     "dist",
     "src",
@@ -29,8 +47,12 @@
     "SPECIFICATION.md",
     "CHANGELOG.md"
   ],
-  "engines": { "node": ">=20.10" },
-  "publishConfig": { "access": "public" },
+  "engines": {
+    "node": ">=20.10"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.build.json",
     "test": "vitest run",
