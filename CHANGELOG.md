@@ -3,7 +3,7 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The package follows [SemVer](https://semver.org/);
 the format version (`formatVersion`) is stated for each package version.
 
-## [1.0.0] — unreleased
+## [1.0.0] — 2026-11-26
 
 Format **1.0**. First public release.
 

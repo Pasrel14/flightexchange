@@ -25,7 +25,13 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      - run: npm publish --provenance
+      - name: Publish to npm (skipped if this version is already there)
+        run: |
+          if npm view "flight-exchange@$(node -p "require('./package.json').version")" version >/dev/null 2>&1; then
+            echo "Version already on npm, skipping publish."
+          else
+            npm publish --provenance
+          fi
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
