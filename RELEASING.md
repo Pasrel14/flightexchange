@@ -15,7 +15,7 @@ qui vérifie, compile, publie sur npm (avec attestation de provenance) et crée 
    npm publish
    ```
 3. Sur npmjs.com → paquet `flight-exchange` → *Settings* → *Trusted Publisher* → GitHub Actions :
-   dépôt `Pasrel14/flightexchange`, workflow `release.yml`. Plus aucun token à stocker : GitHub Actions
+   dépôt `Pasrel14/flightexchange`, workflow `release.yml`, environnement `npm`. Plus aucun token à stocker : GitHub Actions
    s'authentifie auprès de npm par OIDC.
 4. Toujours dans *Settings* : *Publishing access* → « Require two-factor authentication and disallow tokens ».
 
