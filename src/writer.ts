@@ -73,7 +73,8 @@ export async function writeFxf(input: WriteInput, options: WriteOptions = {}): P
   };
 
   // Horodatage ZIP fixe : à contenu identique, archive identique.
-  const mtime = new Date('2000-01-01T00:00:00Z');
+  // Heure locale : fflate écrit l'horodatage DOS en heure locale ; ainsi l'archive est identique quel que soit le fuseau.
+  const mtime = new Date(2000, 0, 1);
   const zippable: Zippable = { 'manifest.json': [encoder.encode(JSON.stringify(manifest, null, 2) + '\n'), { mtime }] };
   for (const e of entries) {
     // les médias sont déjà compressés

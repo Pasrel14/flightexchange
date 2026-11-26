@@ -97,7 +97,8 @@ function unpack(zip: Uint8Array): Files {
 }
 
 function zip(files: Files): Uint8Array {
-  const mtime = new Date('2000-01-01T00:00:00Z');
+  // Heure locale : fflate écrit l'horodatage DOS en heure locale ; ainsi l'archive est identique quel que soit le fuseau.
+  const mtime = new Date(2000, 0, 1);
   const z: Zippable = {};
   for (const [k, v] of Object.entries(files)) z[k] = [v, { mtime }];
   return zipSync(z);
