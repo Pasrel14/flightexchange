@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - name: Examples and fixtures are up to date
+        run: |
+          node scripts/make-examples.ts
+          git diff --exit-code -- examples tests/fixtures
+      - run: npm run build
+      - name: Packed tarball works for a consumer
+        run: |
+          npm pack
+          mkdir -p "$RUNNER_TEMP/consumer"
+          cd "$RUNNER_TEMP/consumer"
+          npm init -y >/dev/null
+          npm install "$GITHUB_WORKSPACE"/flight-exchange-*.tgz
+          npx fxf-validate --strict node_modules/flight-exchange/examples/complete.fxf
+          node --input-type=module -e "import { readFxf } from 'flight-exchange'; import { readFileSync } from 'node:fs'; const r = await readFxf(readFileSync('node_modules/flight-exchange/examples/minimal.fxf')); if (!r.ok) process.exit(1); console.log('ok', r.fxf.track.length, 'points');"

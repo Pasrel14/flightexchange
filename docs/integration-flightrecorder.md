@@ -40,7 +40,7 @@ Points d'attention :
 ## Tests de conformance
 
 1. Test JVM qui exporte un vol de test puis vérifie l'archive en mode strict :
-   `node ../flightexchange/bin/fxf-validate.ts --strict <fichier>` (code de sortie 0 attendu), à lancer depuis
+   `npx -p flight-exchange@1 fxf-validate --strict <fichier>` (code de sortie 0 attendu), à lancer depuis
    un test ou une étape de CI.
 2. Optionnel : valider `manifest.json` et `flight.json` contre `schema/*.schema.json` avec une bibliothèque
    JSON Schema Java (ex. `com.networknt:json-schema-validator`).
@@ -48,9 +48,9 @@ Points d'attention :
 
 ## Prompt pour Claude Code (dans FlightRecorder)
 
-> Consulte `../flightexchange` (SPECIFICATION.md, schema/, examples/, docs/integration-flightrecorder.md).
+> Consulte https://github.com/Pasrel14/flightexchange (SPECIFICATION.md, schema/, examples/, docs/integration-flightrecorder.md).
 > Implémente l'export d'un vol au format FXF 1.0 dans un module dédié (ex. `export`), en Kotlin pur pour la
 > construction de l'archive et testable sans Android. Ajoute l'UUID et la révision du vol (migration Room).
 > Respecte intégralement le mode strict : unités, altitudes séparées, cellules vides pour les valeurs absentes,
 > tri et dédoublonnage par `t`, manifeste avec `size` et `sha256`. Ajoute des tests unitaires et un test qui
-> valide une archive produite avec `node ../flightexchange/bin/fxf-validate.ts --strict`.
+> valide une archive produite avec `npx -p flight-exchange@1 fxf-validate --strict`.

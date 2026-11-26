@@ -4,20 +4,19 @@ Ce qu'il faut faire côté web pour importer des `.fxf`, établi d'après `src/l
 
 ## Brancher la bibliothèque
 
-FlightBook utilise déjà `fflate` ; la bibliothèque de référence s'utilise directement depuis les sources TypeScript :
+La bibliothèque est publiée sur npm (JavaScript compilé + types, aucune option de `tsconfig` requise) :
 
-```json
-"dependencies": { "flight-exchange": "file:../flightexchange" }
+```powershell
+npm install flight-exchange
 ```
-
-Dans `tsconfig.json` : `"allowImportingTsExtensions": true` et `"resolveJsonModule": true`
-(sans effet sur le build, `noEmit` est déjà activé). Puis :
 
 ```ts
 import { readFxf, displayAltitude, type Issue } from 'flight-exchange';
 ```
 
-Un déploiement Cloudflare depuis un autre dépôt devra plutôt publier le paquet (npm privé ou dépendance git).
+Le jeu de conformance est dans le paquet : `node_modules/flight-exchange/tests/fixtures/`.
+Laisser Dependabot (ou Renovate) proposer les mises à jour ; une version majeure du paquet = une version
+majeure du format, à traiter explicitement.
 
 ## Correspondance avec le modèle actuel
 
@@ -47,13 +46,13 @@ Points d'attention :
 
 ## Tests de conformance
 
-Rejouer `../flightexchange/tests/fixtures/*.fxf` dans l'importeur : chaque cas `ok: true` de `expected.json` doit
+Rejouer `node_modules/flight-exchange/tests/fixtures/*.fxf` dans l'importeur : chaque cas `ok: true` de `expected.json` doit
 créer un vol, chaque cas `ok: false` doit produire une erreur, et réimporter `valid/complete.fxf` doit donner « doublon ».
 
 ## Prompt pour Claude Code (dans FlightBook)
 
-> Consulte `../flightexchange` (SPECIFICATION.md, examples/, docs/integration-flightbook.md). Implémente l'import
+> Consulte le paquet npm `flight-exchange` (https://github.com/Pasrel14/flightexchange : SPECIFICATION.md, docs/integration-flightbook.md). Implémente l'import
 > des fichiers `.fxf` en utilisant la bibliothèque de référence `flight-exchange` (`readFxf`) : ajoute l'extension
 > à la zone d'import, la prévisualisation avant import, la détection des doublons par `flightId` et `revision`,
 > l'import des photos, et un rapport d'import qui affiche les avertissements traduits. Ajoute des tests
-> d'intégration qui rejouent tous les cas de `../flightexchange/tests/fixtures/expected.json`.
+> d'intégration qui rejouent tous les cas de `node_modules/flight-exchange/tests/fixtures/expected.json`.

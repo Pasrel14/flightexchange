@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://flightbook.app/schema/fxf/1/flight.schema.json",
+  "$id": "https://cdn.jsdelivr.net/npm/flight-exchange@1/schema/flight.schema.json",
   "title": "FXF flight.json",
   "description": "Description normalisée d'un vol. Voir SPECIFICATION.md § 6. Les propriétés inconnues sont tolérées (compatibilité ascendante) ; le mode strict les refuse.",
   "type": "object",

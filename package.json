@@ -1,31 +1,43 @@
 {
   "name": "flight-exchange",
   "version": "1.0.0",
-  "description": "Flight Exchange Format (FXF) : spécification, schémas, exemples et bibliothèque de référence (lecture, écriture, validation).",
-  "type": "module",
+  "description": "Flight Exchange Format (FXF): an open, versioned file format for exchanging free-flight recordings (paragliding, hang gliding). Specification, JSON Schemas, conformance suite and reference reader/writer/validator.",
+  "keywords": ["paragliding", "hang-gliding", "free-flight", "flight-log", "gps-track", "igc", "gpx", "file-format", "json-schema", "fxf"],
   "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/Pasrel14/flightexchange.git" },
+  "homepage": "https://github.com/Pasrel14/flightexchange#readme",
+  "bugs": { "url": "https://github.com/Pasrel14/flightexchange/issues" },
+  "type": "module",
+  "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
     "./schema/manifest.schema.json": "./schema/manifest.schema.json",
-    "./schema/flight.schema.json": "./schema/flight.schema.json"
+    "./schema/flight.schema.json": "./schema/flight.schema.json",
+    "./package.json": "./package.json"
   },
-  "bin": {
-    "fxf-validate": "./bin/fxf-validate.ts"
-  },
+  "types": "./dist/src/index.d.ts",
+  "bin": { "fxf-validate": "dist/bin/fxf-validate.js" },
   "files": [
+    "dist",
     "src",
     "schema",
-    "bin",
-    "SPECIFICATION.md"
+    "examples/*.fxf",
+    "tests/fixtures",
+    "SPECIFICATION.md",
+    "CHANGELOG.md"
   ],
-  "engines": {
-    "node": ">=22.18"
-  },
+  "engines": { "node": ">=20.10" },
+  "publishConfig": { "access": "public", "provenance": true },
   "scripts": {
+    "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.build.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "examples": "node scripts/make-examples.ts",
-    "validate": "node bin/fxf-validate.ts"
+    "validate": "node bin/fxf-validate.ts",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
     "ajv": "^8.20.0",

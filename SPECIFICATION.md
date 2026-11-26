@@ -177,7 +177,7 @@ Description normalisée du vol. Schéma : `schema/flight.schema.json`.
   "takeoff": { "time": "2026-11-20T09:30:12.000Z", "latitude": 47.0571, "longitude": 6.6074, "altitude": 1102, "siteName": "Morteau" },
   "landing": { "time": "2026-11-20T11:15:40.000Z", "latitude": 47.0702, "longitude": 6.5391, "altitude": 752 },
   "timezone": "Europe/Paris",
-  "pilot": { "name": "Romain" },
+  "pilot": { "name": "Pilote Exemple" },
   "equipment": { "glider": { "brand": "Ozone", "model": "Rush 6", "size": "MS", "certification": "EN-B" } },
   "statistics": { "durationSeconds": 6328, "trackLengthMeters": 31450, "maxAltitudeMeters": 1850, "maxClimbRate": 4.2, "maxSinkRate": -3.1 },
   "recording": {
