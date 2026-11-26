@@ -1,21 +1,22 @@
-# Historique
+# Changelog
 
-Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Le paquet suit [SemVer](https://semver.org/lang/fr/) ;
-la version du format (`formatVersion`) est indiquée pour chaque version du paquet.
+Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The package follows [SemVer](https://semver.org/);
+the format version (`formatVersion`) is stated for each package version.
 
-## [1.0.0] — non publiée
+## [1.0.0] — unreleased
 
-Format **1.0**. Première version publique.
+Format **1.0**. First public release.
 
 ### Format
 
-- Conteneur ZIP `.fxf`, `manifest.json`, `flight.json`, `track.csv`, capteurs (`pressure`, `accelerometer`,
-  `gyroscope`, `magnetometer` réservé), copies IGC/GPX, médias, extensions, codes d'anomalie, mode strict.
-- Identifiants `$id` des schémas : `https://cdn.jsdelivr.net/npm/flight-exchange@1/schema/…`.
+- ZIP container `.fxf`, `manifest.json`, `flight.json`, `track.csv`, sensors (`pressure`, `accelerometer`,
+  `gyroscope`, reserved `magnetometer`), IGC/GPX copies, media, extensions, issue codes, strict mode.
+- Schema `$id`s: `https://cdn.jsdelivr.net/npm/flight-exchange@1/schema/…`.
+- Specification written in English.
 
-### Paquet
+### Package
 
-- `readFxf`, `validateFxf`, `writeFxf`, `displayAltitude`, outils CSV et schémas.
-- Validateur en ligne de commande `fxf-validate`.
-- Exemples et jeu de conformance (24 cas) inclus dans le paquet.
-- Licence MIT.
+- `readFxf`, `validateFxf`, `writeFxf`, `displayAltitude`, CSV helpers and schemas.
+- Command-line validator `fxf-validate`.
+- Examples and conformance suite (24 cases) included in the package.
+- MIT license.

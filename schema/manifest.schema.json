@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://cdn.jsdelivr.net/npm/flight-exchange@1/schema/manifest.schema.json",
   "title": "FXF manifest.json",
-  "description": "Inventaire d'une archive Flight Exchange Format. Voir SPECIFICATION.md § 5. Les propriétés inconnues sont tolérées (compatibilité ascendante) ; le mode strict les refuse.",
+  "description": "Inventory of a Flight Exchange Format archive. See SPECIFICATION.md § 5. Unknown properties are tolerated (forward compatibility); strict mode rejects them.",
   "type": "object",
   "required": ["format", "formatVersion", "flightId", "createdAt", "producer", "files"],
   "properties": {
@@ -33,7 +33,7 @@
           },
           "role": {
             "type": "string",
-            "description": "flight, track, sensor, track-igc, track-gpx, media, other. Un rôle inconnu est ignoré par le consommateur.",
+            "description": "flight, track, sensor, track-igc, track-gpx, media, other. Consumers ignore unknown roles.",
             "minLength": 1
           },
           "mediaType": { "type": "string", "minLength": 1 },

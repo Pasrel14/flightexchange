@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://cdn.jsdelivr.net/npm/flight-exchange@1/schema/flight.schema.json",
   "title": "FXF flight.json",
-  "description": "Description normalisée d'un vol. Voir SPECIFICATION.md § 6. Les propriétés inconnues sont tolérées (compatibilité ascendante) ; le mode strict les refuse.",
+  "description": "Normalised description of a flight. See SPECIFICATION.md § 6. Unknown properties are tolerated (forward compatibility); strict mode rejects them.",
   "type": "object",
   "required": ["id", "activity", "takeoff"],
   "properties": {
@@ -10,7 +10,7 @@
     "revision": { "type": "integer", "minimum": 1, "default": 1 },
     "activity": {
       "type": "string",
-      "description": "paragliding, hang-gliding, speed-flying, sailplane, other. Liste extensible : une valeur inconnue est traitée comme other.",
+      "description": "paragliding, hang-gliding, speed-flying, sailplane, other. Extensible list: an unknown value is treated as other.",
       "minLength": 1,
       "maxLength": 50
     },
@@ -115,7 +115,7 @@
         "time": { "$ref": "#/$defs/instant" },
         "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
         "longitude": { "type": "number", "minimum": -180, "maximum": 180 },
-        "altitude": { "type": "number", "description": "Mètres au-dessus du niveau moyen de la mer." },
+        "altitude": { "type": "number", "description": "Metres above mean sea level." },
         "siteName": { "type": "string", "maxLength": 200 }
       },
       "dependentRequired": { "latitude": ["longitude"], "longitude": ["latitude"] }
